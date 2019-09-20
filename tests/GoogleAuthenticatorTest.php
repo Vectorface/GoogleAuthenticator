@@ -9,12 +9,9 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     /* @var GoogleAuthenticator $googleAuthenticator */
     protected $googleAuthenticator;
 
-    protected $qrCodeUrl;
-
     protected function setUp()
     {
         $this->googleAuthenticator = new GoogleAuthenticator();
-        $this->qrCodeUrl = trim(file_get_contents(__DIR__ . '/fixtures/qr-code-url.txt'));
     }
 
     public function testItCanBeInstantiated()
@@ -100,7 +97,13 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
         $name = 'Test';
         $url = $this->googleAuthenticator->getQRCodeUrl($name, $secret);
 
-        $this->assertEquals($url, $this->qrCodeUrl);
+        $prefix = 'data:image/png;base64,';
+
+        $this->assertStringStartsWith($prefix, $url);
+
+        $base64part = substr($url, strlen($prefix));
+
+        $this->assertRegExp("#^[a-zA-Z0-9/+]*={0,2}$#", $base64part);
     }
 
     /**
