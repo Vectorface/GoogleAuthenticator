@@ -61,7 +61,7 @@ Running the script provides output similar to:
 ```
 Secret is: OQB6ZZGYHCPSX4AK
 
-Google Charts URL for the QR-Code: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAIAAAAI[snipped]
+PNG Data URI for the QR-Code: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAIAAAAI[snipped]
 
 Checking Code '848634' and Secret 'OQB6ZZGYHCPSX4AK':
 OK
