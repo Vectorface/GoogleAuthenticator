@@ -2,14 +2,16 @@
 
 namespace Tests\Vectorface;
 
+use Exception;
+use PHPUnit\Framework\TestCase;
 use Vectorface\GoogleAuthenticator;
 
-class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
+class GoogleAuthenticatorTest extends TestCase
 {
     /* @var GoogleAuthenticator $googleAuthenticator */
     protected $googleAuthenticator;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         $this->googleAuthenticator = new GoogleAuthenticator();
     }
@@ -22,14 +24,14 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testCreateSecretDefaultsToSixteenCharacters()
     {
         $ga = $this->googleAuthenticator;
         $secret = $ga->createSecret();
 
-        $this->assertEquals(strlen($secret), 16);
+        $this->assertEquals(16, strlen($secret));
     }
 
     public function secretLengthProvider()
@@ -42,14 +44,14 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider secretLengthProvider
      * @param int $secretLength
-     * @throws \Exception
+     * @throws Exception
      */
-    public function testCreateSecretLengthCanBeSpecified($secretLength)
+    public function testCreateSecretLengthCanBeSpecified(int $secretLength)
     {
         $ga = $this->googleAuthenticator;
 
         if ($secretLength < 16 || $secretLength > 128) {
-            $this->expectException(\Exception::class);
+            $this->expectException(Exception::class);
             $this->expectExceptionMessage('Bad secret length');
         }
 
@@ -60,12 +62,12 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
 
     public function codeProvider()
     {
-        // Secret, time, code
+        // Secret, time, code, passes
         return [
-            ['SECRET', '0', '200470', true],
-            ['SECRET', '1385909245', '780018', true],
-            ['SECRET', '1378934578', '705013', true],
-            ['SECRET', '1378934578', '000000', false],
+            ['SECRET', 0, '200470', true],
+            ['SECRET', 1385909245, '780018', true],
+            ['SECRET', 1378934578, '705013', true],
+            ['SECRET', 1378934578, '000000', false],
         ];
     }
 
@@ -75,9 +77,9 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
      * @param int|null $timeSlice
      * @param string $code
      * @param bool $passes
-     * @throws \Exception
+     * @throws Exception
      */
-    public function testGetCodeReturnsCorrectValues($secret, $timeSlice, $code, $passes)
+    public function testGetCodeReturnsCorrectValues(string $secret, ?int $timeSlice, string $code, bool $passes)
     {
         $generatedCode = $this->googleAuthenticator->getCode($secret, $timeSlice);
 
@@ -89,7 +91,7 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testGetQRCodeUrl()
     {
@@ -98,16 +100,14 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
         $url = $this->googleAuthenticator->getQRCodeUrl($name, $secret);
 
         $prefix = 'data:image/png;base64,';
-
         $this->assertStringStartsWith($prefix, $url);
 
         $base64part = substr($url, strlen($prefix));
-
         $this->assertRegExp("#^[a-zA-Z0-9/+]*={0,2}$#", $base64part);
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testVerifyCode()
     {
@@ -133,7 +133,7 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testVerifyCodeWithLeadingZero()
     {
@@ -157,21 +157,21 @@ class GoogleAuthenticatorTest extends \PHPUnit\Framework\TestCase
     public function badSecretProvider()
     {
         return [
-            [''], // Empty secrets not allowed
-            ['n'], // Only allows uppercase letters
-            ['=='], // Not correct number of = padding
-            ['===A==='], // Padding = should only appear at the end
+            "Empty secrets not allowed" => [''],
+            "Only allows uppercase letters" => ['n'],
+            "Not correct number of = padding" => ['=='],
+            "Padding = should only appear at the end" => ['===A==='],
         ];
     }
 
     /**
      * @dataProvider badSecretProvider
      * @param string $secret
-     * @throws \Exception
+     * @throws Exception
      */
-    public function testGetCodeWithBadSecret($secret)
+    public function testGetCodeWithBadSecret(string $secret)
     {
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Could not decode secret');
 
         $code = $this->googleAuthenticator->getCode($secret);

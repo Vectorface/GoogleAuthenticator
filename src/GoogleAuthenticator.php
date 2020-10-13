@@ -27,7 +27,7 @@ class GoogleAuthenticator
      * @return string
      * @throws Exception
      */
-    public function createSecret($secretLength = 16)
+    public function createSecret(int $secretLength = 16) : string
     {
         $validChars = self::base32LookupTable();
 
@@ -40,11 +40,6 @@ class GoogleAuthenticator
         $rnd = false;
         if (function_exists('random_bytes')) {
             $rnd = random_bytes($secretLength);
-        } elseif (function_exists('openssl_random_pseudo_bytes')) {
-            $rnd = openssl_random_pseudo_bytes($secretLength, $cryptoStrong);
-            if (!$cryptoStrong) {
-                $rnd = false;
-            }
         }
 
         if (!$rnd) {
@@ -68,7 +63,7 @@ class GoogleAuthenticator
      * @return string
      * @throws Exception
      */
-    public function getCode($secret, $timeSlice = null)
+    public function getCode(string $secret, int $timeSlice = null) : string
     {
         if ($timeSlice === null) {
             $timeSlice = floor(time() / 30);
@@ -107,7 +102,7 @@ class GoogleAuthenticator
      * @return string
      * @throws Exception on encoding error
      */
-    public function getQRCodeUrl($name, $secret)
+    public function getQRCodeUrl(string $name, string $secret) : string
     {
         $uri = "otpauth://totp/$name?secret=$secret";
         return 'data:image/png;base64,' . base64_encode($this->getQRCodeSRC($uri));
@@ -119,12 +114,12 @@ class GoogleAuthenticator
      * @param string $uri to encode into a QRCode
      * @return string binary data of the PNG of the QRCode
      */
-    protected function getQRCodeSRC($uri)
+    protected function getQRCodeSRC(string $uri) : string
     {
         $qr_code = new QrCode($uri);
         $qr_code->setSize(260);
         $qr_code->setMargin(10);
-        $qr_code->setErrorCorrectionLevel(ErrorCorrectionLevel::LOW);
+        $qr_code->setErrorCorrectionLevel(ErrorCorrectionLevel::LOW());
         $qr_code->setForegroundColor(['r' => 0, 'g' => 0, 'b' => 0]);
         $qr_code->setBackgroundColor(['r' => 255, 'g' => 255, 'b' => 255]);
         $qr_code->setValidateResult(false);
@@ -140,7 +135,7 @@ class GoogleAuthenticator
      * @param int $discrepancy This is the allowed time drift in 30 second units (8 means 4 minutes before or after)
      * @return bool
      */
-    public function verifyCode($secret, $code, $discrepancy = 1)
+    public function verifyCode(string $secret, string $code, int $discrepancy = 1) : bool
     {
         $currentTimeSlice = floor(time() / 30);
 
@@ -151,7 +146,7 @@ class GoogleAuthenticator
         for ($i = -$discrepancy; $i <= $discrepancy; $i++) {
             try {
                 $calculatedCode = $this->getCode($secret, $currentTimeSlice + $i);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
 
@@ -169,7 +164,7 @@ class GoogleAuthenticator
      * @param int $length
      * @return self
      */
-    public function setCodeLength($length)
+    public function setCodeLength(int $length) : self
     {
         $this->_codeLength = $length;
         return $this;
@@ -179,9 +174,9 @@ class GoogleAuthenticator
      * Helper class to decode base32
      *
      * @param string $secret
-     * @return bool|string
+     * @return string
      */
-    private static function base32Decode($secret)
+    private static function base32Decode(string $secret) : string
     {
         if (empty($secret)) {
             return '';
@@ -193,13 +188,13 @@ class GoogleAuthenticator
         $paddingCharCount = substr_count($secret, $base32chars[32]);
         $allowedValues = [6, 4, 3, 1, 0];
         if (!in_array($paddingCharCount, $allowedValues)) {
-            return false;
+            return '';
         }
 
         for ($i = 0; $i < 4; $i++){
             if ($paddingCharCount == $allowedValues[$i] &&
                 substr($secret, -($allowedValues[$i])) != str_repeat($base32chars[32], $allowedValues[$i])) {
-                return false;
+                return '';
             }
         }
 
@@ -208,13 +203,13 @@ class GoogleAuthenticator
         $binaryString = "";
         for ($i = 0; $i < count($secret); $i = $i+8) {
             if (!in_array($secret[$i], $base32chars)) {
-                return false;
+                return '';
             }
 
             $x = "";
             for ($j = 0; $j < 8; $j++) {
-                $secretChar = isset($secret[$i + $j]) ? $secret[$i + $j] : 0;
-                $base = isset($base32charsFlipped[$secretChar]) ? $base32charsFlipped[$secretChar] : 0;
+                $secretChar = $secret[$i + $j] ?? 0;
+                $base = $base32charsFlipped[$secretChar] ?? 0;
                 $x .= str_pad(base_convert($base, 10, 2), 5, '0', STR_PAD_LEFT);
             }
             $eightBits = str_split($x, 8);
@@ -231,7 +226,7 @@ class GoogleAuthenticator
      *
      * @return array
      */
-    private static function base32LookupTable()
+    private static function base32LookupTable() : array
     {
         return [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', //  7
