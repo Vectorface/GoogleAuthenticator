@@ -1,7 +1,7 @@
 Google Authenticator (TOTP)
 ===========================
 
-[![Build Status](https://travis-ci.org/Vectorface/GoogleAuthenticator.png?branch=master)](https://travis-ci.org/Vectorface/GoogleAuthenticator)
+![Build Status](https://github.com/Vectorface/GoogleAuthenticator/workflows/Test/badge.svg)
 
 This is a fork of https://github.com/PHPGangsta/GoogleAuthenticator with the following changes:
 
@@ -9,7 +9,7 @@ This is a fork of https://github.com/PHPGangsta/GoogleAuthenticator with the fol
 - No longer generates Google's Chart API to make QR code links
 - Uses namespacing
 - Augmented test coverage to 100%
-- Bumped minimum PHP version to 5.6
+- Bumped minimum PHP version to 7.2
 
 Original License:
 -----------------
@@ -36,21 +36,22 @@ See following example:
 
 ```php
 <?php
-require_once __DIR__ . 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
 
 use Vectorface\GoogleAuthenticator;
 
 $ga = new GoogleAuthenticator();
 $secret = $ga->createSecret();
-echo "Secret is: ".$secret."\n\n";
+echo "Secret is: {$secret}\n\n";
 
 $qrCodeUrl = $ga->getQRCodeUrl('Blog', $secret);
-echo "PNG Data URI for the QR-Code: ".$qrCodeUrl."\n\n";
+echo "PNG Data URI for the QR-Code: {$qrCodeUrl}\n\n";
 
 $oneCode = $ga->getCode($secret);
 echo "Checking Code '$oneCode' and Secret '$secret':\n";
 
-$checkResult = $ga->verifyCode($secret, $oneCode, 2);    // 2 = 2*30sec clock tolerance
+// 2 = 2*30sec clock tolerance
+$checkResult = $ga->verifyCode($secret, $oneCode, 2);
 if ($checkResult) {
     echo 'OK';
 } else {
