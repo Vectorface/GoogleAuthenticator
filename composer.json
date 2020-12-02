@@ -23,7 +23,7 @@
     "issues": "https://github.com/Vectorface/GoogleAuthenticator/issues"
   },
   "require": {
-    "php": ">=7.2",
+    "php": ">=7.3",
     "endroid/qr-code": "^3.9.3"
   },
   "require-dev": {
