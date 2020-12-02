@@ -28,6 +28,7 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           coverage: pcov
           tools: composer:v2
+          extensions: gd
         env:
           COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
