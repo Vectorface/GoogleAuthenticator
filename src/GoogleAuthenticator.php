@@ -2,8 +2,8 @@
 
 namespace Vectorface;
 
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use Exception;
 
 /**
@@ -105,7 +105,7 @@ class GoogleAuthenticator
     public function getQRCodeUrl(string $name, string $secret) : string
     {
         $uri = "otpauth://totp/$name?secret=$secret";
-        return 'data:image/png;base64,' . base64_encode($this->getQRCodeSRC($uri));
+        return $this->getQRCodeDataUri($uri);
     }
 
     /**
@@ -113,18 +113,17 @@ class GoogleAuthenticator
      *
      * @param string $uri to encode into a QRCode
      * @return string binary data of the PNG of the QRCode
+     * @throws Exception
      */
-    protected function getQRCodeSRC(string $uri) : string
+    protected function getQRCodeDataUri(string $uri) : string
     {
-        $qr_code = new QrCode($uri);
-        $qr_code->setSize(260);
-        $qr_code->setMargin(10);
-        $qr_code->setErrorCorrectionLevel(ErrorCorrectionLevel::LOW());
-        $qr_code->setForegroundColor(['r' => 0, 'g' => 0, 'b' => 0]);
-        $qr_code->setBackgroundColor(['r' => 255, 'g' => 255, 'b' => 255]);
-        $qr_code->setValidateResult(false);
-
-        return $qr_code->writeString();
+        return Builder::create()
+            ->data($uri)
+            ->writer(new PngWriter)
+            ->size(260)
+            ->margin(10)
+            ->build()
+            ->getDataUri();
     }
 
     /**
