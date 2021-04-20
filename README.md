@@ -9,7 +9,7 @@ This is a fork of https://github.com/PHPGangsta/GoogleAuthenticator with the fol
 - No longer generates Google's Chart API to make QR code links
 - Uses namespacing
 - Augmented test coverage to 100%
-- Bumped minimum PHP version to 7.2
+- Bumped minimum PHP version to 7.3
 
 Original License:
 -----------------

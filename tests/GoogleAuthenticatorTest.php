@@ -103,7 +103,7 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertStringStartsWith($prefix, $url);
 
         $base64part = substr($url, strlen($prefix));
-        $this->assertRegExp("#^[a-zA-Z0-9/+]*={0,2}$#", $base64part);
+        $this->assertMatchesRegularExpression("#^[a-zA-Z0-9/+]*={0,2}$#", $base64part);
     }
 
     /**
