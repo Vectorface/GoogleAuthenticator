@@ -99,15 +99,18 @@ class GoogleAuthenticator
      *
      * @param string $name
      * @param string $secret
+     * @param string $title
      * @return string
      * @throws Exception on encoding error
      */
-    public function getQRCodeUrl(string $name, string $secret) : string
+    public function getQRCodeUrl(string $name, string $secret, string $title = null) : string
     {
-        $uri = "otpauth://totp/$name?secret=$secret";
+        $label = isset($title) ? "{$title}:{$name}" : $name;
+        $uri = "otpauth://totp/{$label}?secret={$secret}";
+        
         return $this->getQRCodeDataUri($uri);
     }
-
+    
     /**
      * Generate a QRCode for a given string
      *
