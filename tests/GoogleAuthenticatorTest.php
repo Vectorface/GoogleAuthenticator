@@ -5,6 +5,7 @@ namespace Tests\Vectorface;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Vectorface\GoogleAuthenticator;
+use Vectorface\OtpAuth\Paramters\Algorithm;
 
 class GoogleAuthenticatorTest extends TestCase
 {
@@ -176,5 +177,45 @@ class GoogleAuthenticatorTest extends TestCase
 
         $code = $this->googleAuthenticator->getCode($secret);
         $this->assertEquals('', $code);
+    }
+
+    /**
+     * Ensure URL builder emits correctly with minimal params
+     * @return void
+     */
+    public function testUriBuilderDefaults()
+    {
+        $builder = $this->googleAuthenticator->getUriBuilder()
+            ->account("foo")
+            ->secret("bar");
+
+        $this->assertEquals("otpauth://totp/foo?secret=bar", "$builder");
+    }
+
+    /**
+     * Ensure URL builder emits all params correctly
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function testUriBuilderParams()
+    {
+        $secret = $this->googleAuthenticator->createSecret();
+        $digits = 8;
+        $period = 60;
+        $algorithm = Algorithm::SHA256;
+        $builder = $this->googleAuthenticator
+            ->setCodeLength(8)
+            ->getUriBuilder()
+                ->account("foo")
+                ->secret($secret)
+                ->issuer("bar+baz&quux")
+                ->algorithm($algorithm)
+                ->period($period);
+
+        $this->assertEquals(
+            "otpauth://totp/bar%2Bbaz%26quux:%20foo?secret={$secret}&issuer=bar%2Bbaz%26quux&algorithm={$algorithm->value}&digits={$digits}&period={$period}",
+            "$builder"
+        );
     }
 }

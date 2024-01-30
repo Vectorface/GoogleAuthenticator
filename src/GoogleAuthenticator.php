@@ -5,6 +5,8 @@ namespace Vectorface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
+use Vectorface\OtpAuth\Base32;
+use Vectorface\OtpAuth\UriBuilder;
 
 /**
  * PHP Class for handling Google Authenticator 2-factor authentication
@@ -29,8 +31,6 @@ class GoogleAuthenticator
      */
     public function createSecret(int $secretLength = 16) : string
     {
-        $validChars = self::base32LookupTable();
-
         // Valid secret lengths are 80 to 640 bits
         if ($secretLength < 16 || $secretLength > 128) {
             throw new Exception('Bad secret length');
@@ -47,12 +47,7 @@ class GoogleAuthenticator
         }
         // @codeCoverageIgnoreEnd
 
-        $secret = '';
-        for ($i = 0; $i < $secretLength; ++$i) {
-            $secret .= $validChars[ord($rnd[$i]) & 31];
-        }
-
-        return $secret;
+        return Base32::encode($rnd, $secretLength);
     }
 
     /**
@@ -69,7 +64,7 @@ class GoogleAuthenticator
             $timeSlice = floor(time() / 30);
         }
 
-        $secretkey = self::base32Decode($secret);
+        $secretkey = Base32::decode($secret);
         if (empty($secretkey)) {
             throw new Exception('Could not decode secret');
         }
@@ -104,8 +99,25 @@ class GoogleAuthenticator
      */
     public function getQRCodeUrl(string $name, string $secret) : string
     {
-        $uri = "otpauth://totp/$name?secret=$secret";
+        $uri = $this->getUriBuilder()
+            ->account($name)
+            ->secret($secret)
+            ->getUri();
         return $this->getQRCodeDataUri($uri);
+    }
+
+    /**
+     * Build an OTP URI using the builder pattern
+     *
+     * @return UriBuilder
+     */
+    public function getUriBuilder(): UriBuilder
+    {
+        $builder = new UriBuilder();
+        if ($this->_codeLength !== 6) {
+            $builder->digits($this->_codeLength);
+        }
+        return $builder;
     }
 
     /**
@@ -167,73 +179,6 @@ class GoogleAuthenticator
     {
         $this->_codeLength = $length;
         return $this;
-    }
-
-    /**
-     * Helper class to decode base32
-     *
-     * @param string $secret
-     * @return string
-     */
-    private static function base32Decode(string $secret) : string
-    {
-        if (empty($secret)) {
-            return '';
-        }
-
-        $base32chars = self::base32LookupTable();
-        $base32charsFlipped = array_flip($base32chars);
-
-        $paddingCharCount = substr_count($secret, $base32chars[32]);
-        $allowedValues = [6, 4, 3, 1, 0];
-        if (!in_array($paddingCharCount, $allowedValues)) {
-            return '';
-        }
-
-        for ($i = 0; $i < 4; $i++){
-            if ($paddingCharCount == $allowedValues[$i] &&
-                substr($secret, -($allowedValues[$i])) != str_repeat($base32chars[32], $allowedValues[$i])) {
-                return '';
-            }
-        }
-
-        $secret = str_replace('=','', $secret);
-        $secret = str_split($secret);
-        $binaryString = "";
-        for ($i = 0; $i < count($secret); $i = $i+8) {
-            if (!in_array($secret[$i], $base32chars)) {
-                return '';
-            }
-
-            $x = "";
-            for ($j = 0; $j < 8; $j++) {
-                $secretChar = $secret[$i + $j] ?? 0;
-                $base = $base32charsFlipped[$secretChar] ?? 0;
-                $x .= str_pad(base_convert($base, 10, 2), 5, '0', STR_PAD_LEFT);
-            }
-            $eightBits = str_split($x, 8);
-            for ($z = 0; $z < count($eightBits); $z++) {
-                $binaryString .= ( ($y = chr(base_convert($eightBits[$z], 2, 10))) || ord($y) == 48 ) ? $y : "";
-            }
-        }
-
-        return $binaryString;
-    }
-
-    /**
-     * Get array with all 32 characters for decoding from/encoding to base32
-     *
-     * @return array
-     */
-    private static function base32LookupTable() : array
-    {
-        return [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', //  7
-            'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', // 15
-            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', // 23
-            'Y', 'Z', '2', '3', '4', '5', '6', '7', // 31
-            '='  // padding char
-        ];
     }
 }
 
