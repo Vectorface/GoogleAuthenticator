@@ -19,7 +19,11 @@ class UriBuilderTest extends TestCase
             ->account("MyAcct")
             ->secret("FOO");
 
+        /* The builder can generate otpauth URLs */
         $this->assertEquals("otpauth://totp/MyAcct?secret=FOO", "$uriBuilder");
+
+        /* ... or QR codes as data URIs */
+        $this->assertStringStartsWith("data:image/png;base64,", $uriBuilder->getQRCodeDataUri());
 
         /* It is also possible to construct complex OTP URIs, including HOTP */
         $uriBuilder = (new UriBuilder())

@@ -2,6 +2,8 @@
 
 namespace Vectorface\OtpAuth;
 
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use Vectorface\OtpAuth\Paramters\Algorithm;
 use Vectorface\OtpAuth\Paramters\Type;
 
@@ -135,5 +137,16 @@ class UriBuilder
     public function __toString(): string
     {
         return $this->getUri();
+    }
+
+    public function getQRCodeDataUri(): string
+    {
+        return Builder::create()
+            ->data($this->getUri())
+            ->writer(new PngWriter)
+            ->size(260)
+            ->margin(10)
+            ->build()
+            ->getDataUri();
     }
 }
