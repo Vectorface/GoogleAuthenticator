@@ -19,7 +19,7 @@ use Vectorface\OtpAuth\UriBuilder;
  */
 class GoogleAuthenticator
 {
-    protected $_codeLength = 6;
+    protected int $_codeLength = 6;
 
     /**
      * Create new secret.
@@ -157,7 +157,7 @@ class GoogleAuthenticator
         for ($i = -$discrepancy; $i <= $discrepancy; $i++) {
             try {
                 $calculatedCode = $this->getCode($secret, $currentTimeSlice + $i);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 return false;
             }
 
