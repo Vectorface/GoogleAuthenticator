@@ -3,6 +3,8 @@ Google Authenticator (TOTP)
 
 ![Build Status](https://github.com/Vectorface/GoogleAuthenticator/workflows/Test/badge.svg)
 
+**English** | [中文](./README.zh-CN.md)
+
 This is a fork of https://github.com/PHPGangsta/GoogleAuthenticator with the following changes:
 
 - Uses https://github.com/endroid/qr-code to generate QR code data URIs
