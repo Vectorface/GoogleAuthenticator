@@ -19,7 +19,7 @@ use Vectorface\OtpAuth\UriBuilder;
  */
 class GoogleAuthenticator
 {
-    protected $_codeLength = 6;
+    protected int $_codeLength = 6;
 
     /**
      * Create new secret.
@@ -92,15 +92,17 @@ class GoogleAuthenticator
     /**
      * Get QR-Code URL for image, from our native QRCode API
      *
-     * @param string $name
-     * @param string $secret
-     * @return string
+     * @param string $account Account Name
+     * @param string $secret A base32-encoded secret (rfc3548)
+     * @param string|null $issuer The provider or issuer with which the account is associated (optional)
+     * @return string Generate a QRCode for a given string
      * @throws Exception on encoding error
      */
-    public function getQRCodeUrl(string $name, string $secret) : string
+    public function getQRCodeUrl(string $account, string $secret, ?string $issuer = null) : string
     {
         $uri = $this->getUriBuilder()
-            ->account($name)
+            ->issuer($issuer)
+            ->account($account)
             ->secret($secret)
             ->getUri();
         return $this->getQRCodeDataUri($uri);
@@ -157,7 +159,7 @@ class GoogleAuthenticator
         for ($i = -$discrepancy; $i <= $discrepancy; $i++) {
             try {
                 $calculatedCode = $this->getCode($secret, $currentTimeSlice + $i);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 return false;
             }
 

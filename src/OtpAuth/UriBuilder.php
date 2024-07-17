@@ -15,7 +15,7 @@ use Vectorface\OtpAuth\Paramters\Type;
  *
  * Where:
  *  - TYPE is one of "totp" (default) or "hotp"
- *  - LABEL is the account or issue: account (encoded according to rfc3986)
+ *  - LABEL is the account or issuer: account (encoded according to rfc3986)
  *  - PARAMETERS are a set of encoded parameters that may/must include:
  *      - secret: A base32-encoded secret (rfc3548)
  *      - issuer: The provider or service with which the account is associated
@@ -53,7 +53,7 @@ class UriBuilder
         return $this;
     }
 
-    public function issuer(string $issuer): self
+    public function issuer(?string $issuer = null): self
     {
         $this->issuer = $issuer;
         return $this;

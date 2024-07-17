@@ -3,6 +3,8 @@ Google Authenticator (TOTP)
 
 ![Build Status](https://github.com/Vectorface/GoogleAuthenticator/workflows/Test/badge.svg)
 
+**English** | [中文](./README.zh-CN.md)
+
 This is a fork of https://github.com/PHPGangsta/GoogleAuthenticator with the following changes:
 
 - Uses https://github.com/endroid/qr-code to generate QR code data URIs
@@ -44,7 +46,7 @@ $ga = new GoogleAuthenticator();
 $secret = $ga->createSecret();
 echo "Secret is: {$secret}\n\n";
 
-$qrCodeUrl = $ga->getQRCodeUrl('Blog', $secret);
+$qrCodeUrl = $ga->getQRCodeUrl('Admin', $secret, 'Blog');
 echo "PNG Data URI for the QR-Code: {$qrCodeUrl}\n\n";
 
 $oneCode = $ga->getCode($secret);
