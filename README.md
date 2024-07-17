@@ -44,7 +44,7 @@ $ga = new GoogleAuthenticator();
 $secret = $ga->createSecret();
 echo "Secret is: {$secret}\n\n";
 
-$qrCodeUrl = $ga->getQRCodeUrl('Blog', $secret);
+$qrCodeUrl = $ga->getQRCodeUrl('Admin', $secret, 'Blog');
 echo "PNG Data URI for the QR-Code: {$qrCodeUrl}\n\n";
 
 $oneCode = $ga->getCode($secret);

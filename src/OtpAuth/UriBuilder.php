@@ -53,7 +53,7 @@ class UriBuilder
         return $this;
     }
 
-    public function issuer(string $issuer): self
+    public function issuer(?string $issuer = null): self
     {
         $this->issuer = $issuer;
         return $this;
