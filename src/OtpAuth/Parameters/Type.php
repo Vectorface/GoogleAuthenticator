@@ -1,6 +1,6 @@
 <?php
 
-namespace Vectorface\OtpAuth\Paramters;
+namespace Vectorface\OtpAuth\Parameters;
 
 enum Type: string
 {

@@ -5,7 +5,7 @@ namespace Tests\Vectorface;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Vectorface\GoogleAuthenticator;
-use Vectorface\OtpAuth\Paramters\Algorithm;
+use Vectorface\OtpAuth\Parameters\Algorithm;
 
 class GoogleAuthenticatorTest extends TestCase
 {

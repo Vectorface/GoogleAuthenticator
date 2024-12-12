@@ -25,8 +25,6 @@ class GoogleAuthenticator
      * Create new secret.
      * 16 characters, randomly chosen from the allowed base32 characters.
      *
-     * @param int $secretLength
-     * @return string
      * @throws Exception
      */
     public function createSecret(int $secretLength = 16) : string
@@ -53,12 +51,9 @@ class GoogleAuthenticator
     /**
      * Calculate the code, with given secret and point in time
      *
-     * @param string $secret
-     * @param int|null $timeSlice
-     * @return string
      * @throws Exception
      */
-    public function getCode(string $secret, int $timeSlice = null) : string
+    public function getCode(string $secret, ?int $timeSlice = null) : string
     {
         if ($timeSlice === null) {
             $timeSlice = floor(time() / 30);
@@ -78,7 +73,7 @@ class GoogleAuthenticator
         // grab 4 bytes of the result
         $hashpart = substr($hm, $offset, 4);
 
-        // Unpak binary value
+        // Unpack binary value
         $value = unpack('N', $hashpart);
         $value = $value[1];
         // Only 32 bits
@@ -110,8 +105,6 @@ class GoogleAuthenticator
 
     /**
      * Build an OTP URI using the builder pattern
-     *
-     * @return UriBuilder
      */
     public function getUriBuilder(): UriBuilder
     {
@@ -143,10 +136,7 @@ class GoogleAuthenticator
     /**
      * Check if the code is correct. This will accept codes starting from $discrepancy*30sec ago to $discrepancy*30sec from now
      *
-     * @param string $secret
-     * @param string $code
      * @param int $discrepancy This is the allowed time drift in 30 second units (8 means 4 minutes before or after)
-     * @return bool
      */
     public function verifyCode(string $secret, string $code, int $discrepancy = 1) : bool
     {
@@ -173,9 +163,6 @@ class GoogleAuthenticator
 
     /**
      * Set the code length, should be >=6
-     *
-     * @param int $length
-     * @return self
      */
     public function setCodeLength(int $length) : self
     {

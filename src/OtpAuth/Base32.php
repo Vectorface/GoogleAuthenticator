@@ -14,12 +14,8 @@ class Base32
 
     /**
      * Helper method to encode base32
-     *
-     * @param string $data
-     * @param $length
-     * @return string
      */
-    public static function encode(string $data, $length = null): string
+    public static function encode(string $data, ?int $length = null): string
     {
         $length ??= strlen($data);
         $encoded = '';
@@ -31,14 +27,11 @@ class Base32
 
     /**
      * Helper method to decode base32
-     *
-     * @param string $data
-     * @return ?string The decoded string, or null on error
      */
     public static function decode(string $data): ?string
     {
         if (empty($data)) {
-            return '';
+            return null;
         }
 
         $base32charsFlipped = array_flip(self::CHARS);

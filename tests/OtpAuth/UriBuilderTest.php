@@ -3,9 +3,9 @@
 namespace Tests\Vectorface\OtpAuth;
 
 use PHPUnit\Framework\TestCase;
-use Vectorface\OtpAuth\Paramters\Type;
+use Vectorface\OtpAuth\Parameters\Type;
 use Vectorface\OtpAuth\UriBuilder;
-use Vectorface\OtpAuth\Paramters\Algorithm;
+use Vectorface\OtpAuth\Parameters\Algorithm;
 
 class UriBuilderTest extends TestCase
 {

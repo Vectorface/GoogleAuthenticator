@@ -2,10 +2,12 @@
 
 namespace Vectorface\OtpAuth;
 
+use DomainException;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
-use Vectorface\OtpAuth\Paramters\Algorithm;
-use Vectorface\OtpAuth\Paramters\Type;
+use InvalidArgumentException;
+use Vectorface\OtpAuth\Parameters\Algorithm;
+use Vectorface\OtpAuth\Parameters\Type;
 
 /**
  * A TOTP/HOTP URI builder
@@ -74,7 +76,7 @@ class UriBuilder
     public function digits(int $digits): self
     {
         if (!in_array($digits, self::DIGITS)) {
-            throw new \InvalidArgumentException("Number of digits must be 6 or 8");
+            throw new InvalidArgumentException("Number of digits must be 6 or 8");
         }
         $this->digits = $digits;
         return $this;
@@ -83,7 +85,7 @@ class UriBuilder
     public function counter(int $counter): self
     {
         if ($counter < 0) {
-            throw new \InvalidArgumentException("Counter must be an integer greater than or equal to zero");
+            throw new InvalidArgumentException("Counter must be an integer greater than or equal to zero");
         }
         $this->counter = $counter;
         return $this;
@@ -92,7 +94,7 @@ class UriBuilder
     public function period(int $period): self
     {
         if ($period < 1) {
-            throw new \InvalidArgumentException("Period must be an integer greater than zero");
+            throw new InvalidArgumentException("Period must be an integer greater than zero");
         }
         $this->period = $period;
         return $this;
@@ -101,19 +103,19 @@ class UriBuilder
     public function getUri(): string
     {
         if (!isset($this->secret)) {
-            throw new \DomainException("Secret is required for OTP URIs");
+            throw new DomainException("Secret is required for OTP URIs");
         }
 
         if ($this->type === Type::HOTP && !isset($this->counter)) {
-            throw new \DomainException("Counter is a required HOTP parameter");
+            throw new DomainException("Counter is a required HOTP parameter");
         }
 
         if ($this->type === Type::TOTP && isset($this->counter)) {
-            throw new \DomainException("Counter parameter does not apply to TOTP");
+            throw new DomainException("Counter parameter does not apply to TOTP");
         }
 
         if ($this->type === Type::HOTP && isset($this->period)) {
-            throw new \DomainException("Period parameter does not apply to HOTP");
+            throw new DomainException("Period parameter does not apply to HOTP");
         }
 
         $params = array_filter([
