@@ -143,12 +143,11 @@ class UriBuilder
 
     public function getQRCodeDataUri(): string
     {
-        return Builder::create()
-            ->data($this->getUri())
-            ->writer(new PngWriter)
-            ->size(260)
-            ->margin(10)
-            ->build()
-            ->getDataUri();
+        return (new Builder(
+            data: $this->getUri(),
+            writer: new PngWriter(),
+            size: 260,
+            margin: 10
+        ))->build()->getDataUri();
     }
 }

@@ -124,13 +124,12 @@ class GoogleAuthenticator
      */
     protected function getQRCodeDataUri(string $uri) : string
     {
-        return Builder::create()
-            ->data($uri)
-            ->writer(new PngWriter)
-            ->size(260)
-            ->margin(10)
-            ->build()
-            ->getDataUri();
+        return (new Builder(
+            data: $uri,
+            writer: new PngWriter,
+            size: 260,
+            margin: 10,
+        ))->build()->getDataUri();
     }
 
     /**
