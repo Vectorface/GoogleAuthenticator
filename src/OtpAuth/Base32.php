@@ -13,20 +13,42 @@ class Base32
     ];
 
     /**
-     * Helper method to encode base32
+     * Encode a binary string as base32 (RFC 4648), padded to a multiple of 8 characters.
      */
-    public static function encode(string $data, ?int $length = null): string
+    public static function encode(string $data): string
     {
-        $length ??= strlen($data);
-        $encoded = '';
-        for ($i = 0; $i < $length; ++$i) {
-            $encoded .= self::CHARS[ord($data[$i]) & 31];
+        if ($data === '') {
+            return '';
         }
-        return $encoded;
+
+        $ret = "";
+        $carry = 0;
+        $bits = 0;
+        foreach (str_split($data) as $c) {
+            $carry = ($carry << 8) | ord($c);
+            $bits += 8;
+            while ($bits >= 5) {
+                $ret .= self::CHARS[($carry >> ($bits - 5)) & 31];
+                $bits -= 5;
+                $carry &= (1 << $bits) - 1;
+            }
+        }
+
+        if ($bits > 0) {
+            $ret .= self::CHARS[($carry << (5 - $bits)) & 31];
+        }
+
+        // Pad to a multiple of 8 characters, per RFC 4648.
+        if ($pad = (8 - strlen($ret) % 8) % 8) {
+            $ret .= str_repeat(self::CHARS[32], $pad);
+        }
+
+        return $ret;
     }
 
     /**
-     * Helper method to decode base32
+     * Decode a base32 (RFC 4648) string. Padding is optional. Returns null if the
+     * input contains any character outside the base32 alphabet.
      */
     public static function decode(string $data): ?string
     {
@@ -34,40 +56,28 @@ class Base32
             return null;
         }
 
-        $base32charsFlipped = array_flip(self::CHARS);
-        $paddingCharCount = substr_count($data, self::CHARS[32]);
-        $allowedValues = [6, 4, 3, 1, 0];
-        if (!in_array($paddingCharCount, $allowedValues)) {
-            return null;
-        }
+        $map = array_flip(self::CHARS);
 
-        for ($i = 0; $i < 4; $i++){
-            if ($paddingCharCount == $allowedValues[$i] &&
-                substr($data, -($allowedValues[$i])) != str_repeat(self::CHARS[32], $allowedValues[$i])) {
+        $ret = "";
+        $carry = 0;
+        $bits = 0;
+        foreach (str_split($data) as $c) {
+            if ($c === self::CHARS[32]) {
+                continue;
+            }
+            if (!isset($map[$c])) {
                 return null;
             }
-        }
+            $carry = ($carry << 5) | $map[$c];
+            $bits += 5;
 
-        $data = str_replace('=','', $data);
-        $data = str_split($data);
-        $binaryString = "";
-        for ($i = 0; $i < count($data); $i = $i+8) {
-            if (!isset($base32charsFlipped[$data[$i]])) {
-                return null;
-            }
-
-            $x = "";
-            for ($j = 0; $j < 8; $j++) {
-                $secretChar = $data[$i + $j] ?? 0;
-                $base = $base32charsFlipped[$secretChar] ?? 0;
-                $x .= str_pad(base_convert($base, 10, 2), 5, '0', STR_PAD_LEFT);
-            }
-            $eightBits = str_split($x, 8);
-            for ($z = 0; $z < count($eightBits); $z++) {
-                $binaryString .= ( ($y = chr(base_convert($eightBits[$z], 2, 10))) || ord($y) == 48 ) ? $y : "";
+            if ($bits >= 8) {
+                $ret .= chr(($carry >> ($bits - 8)) & 0xff);
+                $bits -= 8;
+                $carry &= (1 << $bits) - 1;
             }
         }
 
-        return $binaryString;
+        return $ret;
     }
 }

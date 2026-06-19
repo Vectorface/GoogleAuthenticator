@@ -37,7 +37,8 @@ class GoogleAuthenticator
         // @codeCoverageIgnoreStart
         $rnd = false;
         if (function_exists('random_bytes')) {
-            $rnd = random_bytes($secretLength);
+            // Each base32 character encodes 5 bits, so an N-character secret needs N * 5 / 8 bytes.
+            $rnd = random_bytes(intdiv($secretLength * 5, 8));
         }
 
         if (!$rnd) {
@@ -45,7 +46,8 @@ class GoogleAuthenticator
         }
         // @codeCoverageIgnoreEnd
 
-        return Base32::encode($rnd, $secretLength);
+        // Strip padding so the secret is a clean base32 string.
+        return rtrim(Base32::encode($rnd), '=');
     }
 
     /**

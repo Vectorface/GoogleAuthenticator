@@ -63,12 +63,27 @@ class GoogleAuthenticatorTest extends TestCase
 
     public function codeProvider()
     {
-        // Secret, time, code, passes
+        // Secret, timeSlice, code, passes
         return [
-            ['SECRET', 0, '200470', true],
-            ['SECRET', 1385909245, '780018', true],
-            ['SECRET', 1378934578, '705013', true],
-            ['SECRET', 1378934578, '000000', false],
+            // RFC 6238 Appendix B SHA-1 reference vectors. Secret is base32("12345678901234567890");
+            // the published codes are 8 digits, so the default 6-digit code is their last 6 digits.
+            'RFC6238 T=1'        => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 1, '287082', true],
+            'RFC6238 T=37037036' => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 37037036, '081804', true],
+            'RFC6238 T=37037037' => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 37037037, '050471', true],
+            'RFC6238 T=41152263' => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 41152263, '005924', true],
+            'RFC6238 T=66666666' => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 66666666, '279037', true],
+            'RFC6238 wrong code' => ['GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', 1, '000000', false],
+
+            // A 16-character secret (the default createSecret() length).
+            'short secret @0'    => ['JBSWY3DPEHPK3PXP', 0, '282760', true],
+            'short secret @1'    => ['JBSWY3DPEHPK3PXP', 1, '996554', true],
+            'short secret @1e6'  => ['JBSWY3DPEHPK3PXP', 1000000, '041374', true],
+
+            // Original SECRET vectors, corrected to RFC-compliant values (6 chars decodes to 3 bytes).
+            'SECRET @0'          => ['SECRET', 0, '857148', true],
+            'SECRET @1385909245' => ['SECRET', 1385909245, '979377', true],
+            'SECRET @1378934578' => ['SECRET', 1378934578, '560773', true],
+            'SECRET wrong code'  => ['SECRET', 1378934578, '000000', false],
         ];
     }
 
