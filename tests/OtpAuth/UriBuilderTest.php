@@ -3,6 +3,8 @@
 namespace Tests\Vectorface\OtpAuth;
 
 use PHPUnit\Framework\TestCase;
+use Vectorface\GoogleAuthenticator;
+use Vectorface\OtpAuth\Base32;
 use Vectorface\OtpAuth\Parameters\Type;
 use Vectorface\OtpAuth\UriBuilder;
 use Vectorface\OtpAuth\Parameters\Algorithm;
@@ -35,7 +37,75 @@ class UriBuilderTest extends TestCase
             ->digits(8)
             ->counter(123);
 
-        $this->assertEquals('otpauth://hotp/My%20Company:%20My%20Account?secret=SBXATFDSFU&issuer=My%20Company&algorithm=SHA256&digits=8&counter=123', "$uriBuilder");
+        $this->assertEquals('otpauth://hotp/My%20Company:%20My%20Account?secret=KJQXOICTMVRXEZLU&issuer=My%20Company&algorithm=SHA256&digits=8&counter=123', "$uriBuilder");
+    }
+
+    /**
+     * Each case pairs a configured builder with the otpauth URI it must produce.
+     * Every secret here is a valid base32 (rfc3548) string, as required by the spec.
+     */
+    public function validSecretUriProvider(): array
+    {
+        return [
+            'TOTP default, 16-char secret' => [
+                (new UriBuilder())
+                    ->account("alice@example.com")
+                    ->secret("JBSWY3DPEHPK3PXP"),
+                "otpauth://totp/alice%40example.com?secret=JBSWY3DPEHPK3PXP",
+            ],
+            'TOTP full params, 32-char secret' => [
+                (new UriBuilder())
+                    ->account("alice")
+                    ->issuer("Example Inc")
+                    ->secret("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")
+                    ->algorithm(Algorithm::SHA512)
+                    ->digits(6)
+                    ->period(60),
+                "otpauth://totp/Example%20Inc:%20alice?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Example%20Inc&algorithm=SHA512&digits=6&period=60",
+            ],
+            'HOTP, counter 0' => [
+                (new UriBuilder())
+                    ->type(Type::HOTP)
+                    ->account("bob")
+                    ->secret("JBSWY3DPEHPK3PXP")
+                    ->counter(0),
+                "otpauth://hotp/bob?secret=JBSWY3DPEHPK3PXP",
+            ],
+            'TOTP, raw secret base32-encoded' => [
+                (new UriBuilder())
+                    ->account("carol")
+                    ->secret("Raw Secret", true),
+                "otpauth://totp/carol?secret=KJQXOICTMVRXEZLU",
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider validSecretUriProvider
+     */
+    public function testBuildsUriWithValidSecret(UriBuilder $builder, string $expected): void
+    {
+        $this->assertEquals($expected, (string)$builder);
+
+        // The secret embedded in the URI must be a decodable base32 string.
+        parse_str(parse_url((string)$builder, PHP_URL_QUERY), $query);
+        $this->assertNotNull(Base32::decode($query['secret']), "embedded secret is not valid base32");
+    }
+
+    /**
+     * A secret produced by createSecret() must be a valid base32 string that survives
+     * the round-trip through the URI builder and back out via decode().
+     */
+    public function testCreateSecretProducesUsableUri(): void
+    {
+        $secret = (new GoogleAuthenticator())->createSecret();
+
+        $uri = (string)(new UriBuilder())->account("dave")->secret($secret);
+        $this->assertStringContainsString("secret={$secret}", $uri);
+
+        parse_str(parse_url($uri, PHP_URL_QUERY), $query);
+        $this->assertSame($secret, $query['secret']);
+        $this->assertNotNull(Base32::decode($query['secret']));
     }
 
     public function testInvalidType()
