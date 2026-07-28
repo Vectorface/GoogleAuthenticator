@@ -144,7 +144,7 @@ class GoogleAuthenticator
     {
         $currentTimeSlice = floor(time() / 30);
 
-        if (strlen($code) != 6) {
+        if (strlen($code) !== $this->_codeLength || !ctype_digit($code)) {
             return false;
         }
 
