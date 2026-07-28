@@ -192,6 +192,27 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertFalse($this->googleAuthenticator->verifyCode($secret, "12345\n"));
     }
 
+    public function invalidDiscrepancyProvider()
+    {
+        return [
+            'Negative' => [-1],
+            'Too large' => [61],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidDiscrepancyProvider
+     * @param int $discrepancy
+     * @throws Exception
+     */
+    public function testVerifyCodeRejectsOutOfRangeDiscrepancy(int $discrepancy)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Discrepancy must be between 0 and 60 time slices');
+
+        $this->googleAuthenticator->verifyCode('SECRET', '123456', $discrepancy);
+    }
+
     public function testSetCodeLength()
     {
         $result = $this->googleAuthenticator->setCodeLength(6);

@@ -139,9 +139,14 @@ class GoogleAuthenticator
      * Check if the code is correct. This will accept codes starting from $discrepancy*30sec ago to $discrepancy*30sec from now
      *
      * @param int $discrepancy This is the allowed time drift in 30 second units (8 means 4 minutes before or after)
+     * @throws InvalidArgumentException if $discrepancy is out of the 0-60 range
      */
     public function verifyCode(string $secret, string $code, int $discrepancy = 1) : bool
     {
+        if ($discrepancy < 0 || $discrepancy > 60) {
+            throw new InvalidArgumentException('Discrepancy must be between 0 and 60 time slices');
+        }
+
         $currentTimeSlice = floor(time() / 30);
 
         if (strlen($code) !== $this->_codeLength || !ctype_digit($code)) {
