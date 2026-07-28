@@ -192,6 +192,28 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertFalse($this->googleAuthenticator->verifyCode($secret, "12345\n"));
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testVerifyCodeReportsMatchedTimeSlice()
+    {
+        $secret = 'SECRET';
+        $currentTimeSlice = (int) floor(time() / 30);
+
+        // A code from the previous time slice should match at $currentTimeSlice - 1
+        $code = $this->googleAuthenticator->getCode($secret, $currentTimeSlice - 1);
+        $matchedTimeSlice = null;
+        $result = $this->googleAuthenticator->verifyCode($secret, $code, 1, $matchedTimeSlice);
+
+        $this->assertTrue($result);
+        $this->assertSame($currentTimeSlice - 1, $matchedTimeSlice);
+
+        // On failure, the matched time slice must remain untouched
+        $matchedTimeSlice = null;
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, '000000', 0, $matchedTimeSlice));
+        $this->assertNull($matchedTimeSlice);
+    }
+
     public function invalidDiscrepancyProvider()
     {
         return [

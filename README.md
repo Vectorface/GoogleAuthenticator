@@ -31,6 +31,25 @@ For a secure installation you have to make sure that used codes cannot be reused
 limit the number of verifications, to fight against brute-force attacks. For example you could limit the amount of
 verifications to 10 tries within 10 minutes for one IP address (or IPv6 block). It depends on your environment.
 
+Preventing replay attacks:
+--------------------------
+
+`verifyCode()` accepts an optional by-reference parameter that receives the time slice which matched. As required by
+[RFC 6238 section 5.2](https://tools.ietf.org/html/rfc6238#section-5.2), persist the last accepted time slice per user
+and refuse any code that matches a slice less than or equal to the stored value:
+
+```php
+$matchedTimeSlice = null;
+if ($ga->verifyCode($secret, $oneCode, 2, $matchedTimeSlice)) {
+    if ($matchedTimeSlice <= $user->lastUsedTimeSlice) {
+        // Code already used: reject to prevent a replay attack
+    } else {
+        $user->lastUsedTimeSlice = $matchedTimeSlice; // persist this value
+        // Code accepted
+    }
+}
+```
+
 Usage:
 ------
 

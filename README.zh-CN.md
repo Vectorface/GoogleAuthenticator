@@ -27,6 +27,23 @@ Google Authenticator (TOTP)
 
 为了您能安全安装，您必须确保使用的代码不能被重复使用（重放攻击）。您还需要限制验证次数，以对抗暴力攻击。例如，您可以将一个 IP 地址（或 IPv6 块）的验证次数限制为 10 分钟内 10 次尝试。这取决于您的环境。
 
+防止重放攻击：
+--------------
+
+`verifyCode()` 接受一个可选的引用参数，用于接收匹配成功的时间片。按照 [RFC 6238 第 5.2 节](https://tools.ietf.org/html/rfc6238#section-5.2)的要求，请为每个用户持久化最后一次接受的时间片，并拒绝任何匹配时间片小于或等于该存储值的验证码：
+
+```php
+$matchedTimeSlice = null;
+if ($ga->verifyCode($secret, $oneCode, 2, $matchedTimeSlice)) {
+    if ($matchedTimeSlice <= $user->lastUsedTimeSlice) {
+        // 验证码已被使用：拒绝以防止重放攻击
+    } else {
+        $user->lastUsedTimeSlice = $matchedTimeSlice; // 持久化该值
+        // 验证码通过
+    }
+}
+```
+
 用法：
 ------
 
