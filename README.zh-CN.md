@@ -1,36 +1,74 @@
-Google Authenticator (TOTP)
-===========================
+# Google Authenticator (TOTP)
 
 ![构建状态](https://github.com/Vectorface/GoogleAuthenticator/workflows/Test/badge.svg)
 
 **中文** | [English](./README.md)
 
-这是 https://github.com/PHPGangsta/GoogleAuthenticator 的一个分支，包含以下更改：
+一个与 Google Authenticator 移动应用兼容的 PHP 双因素认证（2FA）库。
+它可以生成密钥、生成并校验一次性验证码，并将密钥渲染为可扫描的二维码 —— 按照
+[RFC 6238](https://tools.ietf.org/html/rfc6238) 规范实现 TOTP。
 
-- 使用 https://github.com/endroid/qr-code 生成二维码数据 URIs
-- 不再生成 Google 的 Chart API 来制作二维码链接
+本项目是 [PHPGangsta/GoogleAuthenticator](https://github.com/PHPGangsta/GoogleAuthenticator) 的分支，包含以下改动：
+
+- 使用 [endroid/qr-code](https://github.com/endroid/qr-code) 生成二维码数据 URI
+- 不再依赖 Google Chart API 生成二维码链接
 - 使用命名空间
-- 将测试覆盖率增加到 100%
-- 将最低 PHP 版本提升到 8.2
+- 测试覆盖率提升至 100%
+- 最低 PHP 版本提升至 8.2
 
-原始许可证：
------------------
+## 安装
 
-* 版权所有 (c) 2012-2016, [http://www.phpgangsta.de](http://www.phpgangsta.de)
-* 作者：Michael Kliewe, [@PHPGangsta](http://twitter.com/PHPGangsta) 和 [贡献者](https://github.com/PHPGangsta/GoogleAuthenticator/graphs/contributors)
-* 根据 BSD 许可证授权。
+通过 [Composer](https://getcomposer.org/doc/01-basic-usage.md) 安装：
 
-描述：
-------------
+```bash
+composer require vectorface/googleauthenticator
+```
 
-这个 PHP 类可以用来与 Google Authenticator 移动应用进行双重因素认证交互。该类可以生成密钥、生成代码、验证代码并提供用于扫描密钥的二维码。它实现了根据 [RFC6238](https://tools.ietf.org/html/rfc6238) 的 TOTP。
+## 快速开始
 
-为了您能安全安装，您必须确保使用的代码不能被重复使用（重放攻击）。您还需要限制验证次数，以对抗暴力攻击。例如，您可以将一个 IP 地址（或 IPv6 块）的验证次数限制为 10 分钟内 10 次尝试。这取决于您的环境。
+```php
+<?php
+require_once 'vendor/autoload.php';
 
-防止重放攻击：
---------------
+use Vectorface\GoogleAuthenticator;
 
-`verifyCode()` 接受一个可选的引用参数，用于接收匹配成功的时间片。按照 [RFC 6238 第 5.2 节](https://tools.ietf.org/html/rfc6238#section-5.2)的要求，请为每个用户持久化最后一次接受的时间片，并拒绝任何匹配时间片小于或等于该存储值的验证码：
+$ga = new GoogleAuthenticator();
+
+// 1. 创建密钥并分发给用户
+$secret = $ga->createSecret();
+echo "密钥是: {$secret}\n\n";
+
+// 2. 将密钥渲染为二维码（PNG 数据 URI）供用户扫描
+$qrCodeUrl = $ga->getQRCodeUrl('Admin', $secret, 'Blog');
+echo "二维码的 PNG 数据 URI: {$qrCodeUrl}\n\n";
+
+// 3. 校验用户输入的一次性验证码
+$oneCode = $ga->getCode($secret);
+echo "检查验证码 '$oneCode' 和密钥 '$secret':\n";
+
+// discrepancy = 2 表示允许 ±2 × 30 秒的时钟偏差
+$checkResult = $ga->verifyCode($secret, $oneCode, 2);
+echo $checkResult ? 'OK' : 'FAILED';
+```
+
+运行脚本会得到类似以下的输出：
+
+```
+密钥是: OQB6ZZGYHCPSX4AK
+
+二维码的 PNG 数据 URI: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAIAAAAI[已截断]
+
+检查验证码 '848634' 和密钥 'OQB6ZZGYHCPSX4AK':
+OK
+```
+
+## 安全注意事项
+
+### 防止重放攻击
+
+同一个 TOTP 验证码绝不能被接受两次。`verifyCode()` 接受一个可选的引用参数，
+用于接收匹配成功的时间片。按照 [RFC 6238 第 5.2 节](https://tools.ietf.org/html/rfc6238#section-5.2)
+的要求，请为每个用户持久化最后一次接受的时间片，并拒绝任何匹配时间片小于或等于该存储值的验证码：
 
 ```php
 $matchedTimeSlice = null;
@@ -44,55 +82,47 @@ if ($ga->verifyCode($secret, $oneCode, 2, $matchedTimeSlice)) {
 }
 ```
 
-用法：
-------
+### 限制验证频率
 
-请参见以下示例：
+为防御暴力破解攻击，请限制验证尝试次数。例如，可以将单个 IP 地址（或 IPv6 网段）
+的验证限制为 10 分钟内最多 10 次尝试 —— 请根据实际环境调整。
+
+## 进阶用法
+
+### 自定义验证码长度
+
+验证码默认为 6 位，支持 6 到 8 位（RFC 4226）：
 
 ```php
-<?php
-require_once 'vendor/autoload.php';
-
-use Vectorface\GoogleAuthenticator;
-
-$ga = new GoogleAuthenticator();
-$secret = $ga->createSecret();
-echo "密钥是: {$secret}\n\n";
-
-$qrCodeUrl = $ga->getQRCodeUrl('Admin', $secret, 'Blog');
-echo "二维码的 PNG 数据 URI: {$qrCodeUrl}\n\n";
-
-$oneCode = $ga->getCode($secret);
-echo "检查代码 '$oneCode' 和密钥 '$secret':\n";
-
-// 2 = 2*30秒的时钟容差
-$checkResult = $ga->verifyCode($secret, $oneCode, 2);
-if ($checkResult) {
-    echo 'OK';
-} else {
-    echo 'FAILED';
-}
-```
-运行脚本会提供类似以下的输出：
-```
-密钥是: OQB6ZZGYHCPSX4AK
-
-二维码的 PNG 数据 URI: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAIAAAAI[已截断]
-
-检查代码 '848634' 和密钥 'OQB6ZZGYHCPSX4AK':
-OK
+$ga = (new GoogleAuthenticator())->setCodeLength(8);
 ```
 
-安装：
--------------
+### 构建 otpauth:// URI
 
-- 使用 [Composer](https://getcomposer.org/doc/01-basic-usage.md) 安装包
+如需完全控制配置 URI（算法、位数、周期、HOTP 计数器等），可使用链式的 `UriBuilder`：
 
-```composer require vectorface/googleauthenticator```
+```php
+$uri = $ga->getUriBuilder()
+    ->issuer('Blog')
+    ->account('Admin')
+    ->secret($secret)
+    ->getUri(); // otpauth://totp/Blog:%20Admin?secret=...&issuer=Blog
+```
 
-运行测试：
-----------
+## 运行测试
 
-- 所有测试都在 `tests` 文件夹内。
-- 执行 `composer install` 来准备您的环境。
-- 从项目根目录运行 `composer test`。
+所有测试位于 `tests` 文件夹内。
+
+```bash
+composer install
+composer test
+```
+
+## 许可证
+
+基于 [BSD 许可证](./LICENSE.md)授权。
+
+原始项目：
+
+- 版权所有 (c) 2012-2016, [http://www.phpgangsta.de](http://www.phpgangsta.de)
+- 作者：Michael Kliewe, [@PHPGangsta](http://twitter.com/PHPGangsta) 及[贡献者](https://github.com/PHPGangsta/GoogleAuthenticator/graphs/contributors)
