@@ -164,6 +164,34 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertEquals(false, $result);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testVerifyCodeWithEightDigits()
+    {
+        $secret = 'SECRET';
+        $ga = $this->googleAuthenticator->setCodeLength(8);
+
+        $code = $ga->getCode($secret);
+        $this->assertEquals(8, strlen($code));
+        $this->assertTrue($ga->verifyCode($secret, $code));
+
+        // A 6-digit code must not verify when 8 digits are configured
+        $this->assertFalse($ga->verifyCode($secret, substr($code, 0, 6)));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testVerifyCodeRejectsNonNumericCode()
+    {
+        $secret = 'SECRET';
+
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, 'abcdef'));
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, '12345x'));
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, "12345\n"));
+    }
+
     public function testSetCodeLength()
     {
         $result = $this->googleAuthenticator->setCodeLength(6);
