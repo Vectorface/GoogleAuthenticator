@@ -5,6 +5,7 @@ namespace Vectorface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
+use InvalidArgumentException;
 use Vectorface\OtpAuth\Base32;
 use Vectorface\OtpAuth\UriBuilder;
 
@@ -163,10 +164,15 @@ class GoogleAuthenticator
     }
 
     /**
-     * Set the code length, should be >=6
+     * Set the code length, must be between 6 and 8 (RFC 4226)
+     *
+     * @throws InvalidArgumentException
      */
     public function setCodeLength(int $length) : self
     {
+        if ($length < 6 || $length > 8) {
+            throw new InvalidArgumentException('Code length must be between 6 and 8');
+        }
         $this->_codeLength = $length;
         return $this;
     }

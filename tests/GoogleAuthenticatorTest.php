@@ -3,6 +3,7 @@
 namespace Tests\Vectorface;
 
 use Exception;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Vectorface\GoogleAuthenticator;
 use Vectorface\OtpAuth\Parameters\Algorithm;
@@ -168,6 +169,28 @@ class GoogleAuthenticatorTest extends TestCase
         $result = $this->googleAuthenticator->setCodeLength(6);
 
         $this->assertInstanceOf(GoogleAuthenticator::class, $result);
+    }
+
+    public function invalidCodeLengthProvider()
+    {
+        return [
+            'Too short' => [5],
+            'Too long' => [9],
+            'Zero' => [0],
+            'Negative' => [-1],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidCodeLengthProvider
+     * @param int $length
+     */
+    public function testSetCodeLengthRejectsOutOfRangeValues(int $length)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Code length must be between 6 and 8');
+
+        $this->googleAuthenticator->setCodeLength($length);
     }
 
     public function badSecretProvider()
