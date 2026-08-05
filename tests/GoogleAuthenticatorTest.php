@@ -3,6 +3,7 @@
 namespace Tests\Vectorface;
 
 use Exception;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Vectorface\GoogleAuthenticator;
 use Vectorface\OtpAuth\Parameters\Algorithm;
@@ -163,11 +164,61 @@ class GoogleAuthenticatorTest extends TestCase
         $this->assertEquals(false, $result);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testVerifyCodeWithEightDigits()
+    {
+        $secret = 'SECRET';
+        $ga = $this->googleAuthenticator->setCodeLength(8);
+
+        $code = $ga->getCode($secret);
+        $this->assertEquals(8, strlen($code));
+        $this->assertTrue($ga->verifyCode($secret, $code));
+
+        // A 6-digit code must not verify when 8 digits are configured
+        $this->assertFalse($ga->verifyCode($secret, substr($code, 0, 6)));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testVerifyCodeRejectsNonNumericCode()
+    {
+        $secret = 'SECRET';
+
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, 'abcdef'));
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, '12345x'));
+        $this->assertFalse($this->googleAuthenticator->verifyCode($secret, "12345\n"));
+    }
+
     public function testSetCodeLength()
     {
         $result = $this->googleAuthenticator->setCodeLength(6);
 
         $this->assertInstanceOf(GoogleAuthenticator::class, $result);
+    }
+
+    public function invalidCodeLengthProvider()
+    {
+        return [
+            'Too short' => [5],
+            'Too long' => [9],
+            'Zero' => [0],
+            'Negative' => [-1],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidCodeLengthProvider
+     * @param int $length
+     */
+    public function testSetCodeLengthRejectsOutOfRangeValues(int $length)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Code length must be between 6 and 8');
+
+        $this->googleAuthenticator->setCodeLength($length);
     }
 
     public function badSecretProvider()
